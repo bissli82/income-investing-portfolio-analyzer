@@ -94,6 +94,101 @@ def get_dividends_for_period(symbol, start_date, end_date, shares_owned):
         print(f"    ❌ Error getting dividends: {e}")
         return {'success': False, 'error': str(e), 'total_dividends': 0.0}
 
+def get_etf_additional_info(symbol):
+    """Get NAV and ETF size information, with Canadian ETF support"""
+    try:
+        print(f"    📊 Getting NAV and ETF size info...")
+        
+        # Try different ticker formats for Canadian ETFs
+        symbols_to_try = [symbol]
+        
+        # Add .TO suffix for Toronto Stock Exchange if not already present
+        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
+            symbols_to_try.append(f"{symbol}.TO")
+            symbols_to_try.append(f"{symbol}.TSE")
+        
+        # Try NEO Exchange format for some Canadian ETFs
+        if symbol in ['HHIS', 'MSTE']:
+            symbols_to_try.append(f"{symbol}.NE")
+        
+        for ticker in symbols_to_try:
+            try:
+                yf_ticker = yf.Ticker(ticker)
+                info = yf_ticker.info
+                
+                if info:
+                    # Extract NAV (Net Asset Value)
+                    nav = None
+                    nav_keys = ['navPrice', 'bookValue', 'priceToBook']
+                    for key in nav_keys:
+                        if key in info and info[key]:
+                            if key == 'priceToBook' and info[key] != 0:
+                                # Calculate NAV from price-to-book ratio
+                                regular_price = info.get('regularMarketPrice', 0)
+                                if regular_price > 0:
+                                    nav = regular_price / info[key]
+                            else:
+                                nav = info[key]
+                            break
+                    
+                    # Extract ETF size (Assets Under Management)
+                    etf_size = None
+                    size_keys = ['totalAssets', 'fundInceptionDate']
+                    for key in size_keys:
+                        if key in info and info[key]:
+                            if key == 'totalAssets':
+                                etf_size = info[key]
+                            break
+                    
+                    # Also try market cap as fallback
+                    if not etf_size and 'marketCap' in info and info['marketCap']:
+                        etf_size = info['marketCap']
+                    
+                    # Format the size for display
+                    formatted_size = "N/A"
+                    if etf_size:
+                        if etf_size >= 1e9:
+                            formatted_size = f"${etf_size/1e9:.1f}B"
+                        elif etf_size >= 1e6:
+                            formatted_size = f"${etf_size/1e6:.1f}M"
+                        elif etf_size >= 1e3:
+                            formatted_size = f"${etf_size/1e3:.1f}K"
+                        else:
+                            formatted_size = f"${etf_size:.0f}"
+                    
+                    print(f"    ✓ NAV: ${nav:.2f if nav else 'N/A'}, Size: {formatted_size} (using {ticker})")
+                    return {
+                        'nav': nav,
+                        'etf_size': etf_size,
+                        'formatted_size': formatted_size,
+                        'success': True,
+                        'ticker_used': ticker
+                    }
+                
+            except Exception as e:
+                print(f"    ❌ Failed getting additional info with {ticker}: {e}")
+                continue
+        
+        # If all methods failed
+        print(f"    ❌ Could not get additional info for {symbol}")
+        return {
+            'nav': None,
+            'etf_size': None,
+            'formatted_size': "N/A",
+            'success': False,
+            'error': f'Could not retrieve additional info for {symbol}'
+        }
+        
+    except Exception as e:
+        print(f"    ❌ Error getting additional info for {symbol}: {e}")
+        return {
+            'nav': None,
+            'etf_size': None,
+            'formatted_size': "N/A",
+            'success': False,
+            'error': str(e)
+        }
+
 def get_current_market_price(symbol):
     """Get current market price for a symbol, with Canadian ETF support"""
     try:
@@ -282,6 +377,13 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
         gain_loss_pct = 0.0
         print(f"  ❌ Could not get current price")
     
+    # Get additional ETF information (NAV and size)
+    additional_info = get_etf_additional_info(symbol)
+    time.sleep(0.2)  # Be nice to the API
+    
+    nav = additional_info.get('nav', None)
+    etf_size = additional_info.get('formatted_size', 'N/A')
+    
     # Get dividend data for the period (use actual start date)
     dividend_data = get_dividends_for_period(symbol, actual_start_date, end_date, shares_purchased)
     time.sleep(0.2)  # Be nice to the API
@@ -298,8 +400,10 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
     return {
         'Symbol': symbol_display,
         'Initial Share Price USD': round(initial_price, 2),
-        'Shares Purchased': round(shares_purchased, 2),
         'Current Share Price USD': round(current_price, 2),
+        'NAV USD': round(nav, 2) if nav else 'N/A',
+        'ETF Size': etf_size,
+        'Shares Purchased': round(shares_purchased, 2),
         'Current Portfolio Value USD': round(current_value, 2),
         'Dividends Collected USD': round(dividends_collected, 2),
         'Gain/Loss USD': round(gain_loss, 2),
