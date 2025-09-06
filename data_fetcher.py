@@ -7,6 +7,28 @@ import time
 # Suppress pandas warnings for cleaner output
 warnings.filterwarnings('ignore', category=FutureWarning)
 
+def get_international_ticker_formats(symbol):
+    """Get list of ticker formats to try for international markets"""
+    symbols_to_try = [symbol]
+    
+    # Add exchange suffixes if not already present
+    if not any(symbol.endswith(suffix) for suffix in ['.TO', '.TSE', '.AX', '.L', '.NE']):
+        # Canadian exchanges
+        symbols_to_try.append(f"{symbol}.TO")
+        symbols_to_try.append(f"{symbol}.TSE")
+        
+        # Australian exchange
+        symbols_to_try.append(f"{symbol}.AX")
+        
+        # London Stock Exchange
+        symbols_to_try.append(f"{symbol}.L")
+    
+    # Try NEO Exchange format for some Canadian ETFs
+    if symbol in ['HHIS', 'MSTE']:
+        symbols_to_try.append(f"{symbol}.NE")
+    
+    return symbols_to_try
+
 def format_date_dd_mm_yyyy(date_str):
     """Convert date from YYYY-MM-DD to DD/MM/YYYY format"""
     try:
@@ -20,17 +42,8 @@ def get_dividends_for_period(symbol, start_date, end_date, shares_owned):
     try:
         print(f"    💰 Getting dividends for period...")
         
-        # Try different ticker formats for Canadian ETFs
-        symbols_to_try = [symbol]
-        
-        # Add .TO suffix for Toronto Stock Exchange if not already present
-        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
-            symbols_to_try.append(f"{symbol}.TO")
-            symbols_to_try.append(f"{symbol}.TSE")
-        
-        # Try NEO Exchange format for some Canadian ETFs
-        if symbol in ['HHIS', 'MSTE']:
-            symbols_to_try.append(f"{symbol}.NE")
+        # Try different ticker formats for international markets
+        symbols_to_try = get_international_ticker_formats(symbol)
         
         for ticker in symbols_to_try:
             try:
@@ -99,17 +112,8 @@ def get_etf_additional_info(symbol):
     try:
         print(f"    📊 Getting NAV and ETF size info...")
         
-        # Try different ticker formats for Canadian ETFs
-        symbols_to_try = [symbol]
-        
-        # Add .TO suffix for Toronto Stock Exchange if not already present
-        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
-            symbols_to_try.append(f"{symbol}.TO")
-            symbols_to_try.append(f"{symbol}.TSE")
-        
-        # Try NEO Exchange format for some Canadian ETFs
-        if symbol in ['HHIS', 'MSTE']:
-            symbols_to_try.append(f"{symbol}.NE")
+        # Try different ticker formats for international markets
+        symbols_to_try = get_international_ticker_formats(symbol)
         
         for ticker in symbols_to_try:
             try:
@@ -201,17 +205,8 @@ def get_current_market_price(symbol):
     try:
         print(f"    📈 Getting current market price...")
         
-        # Try different ticker formats for Canadian ETFs
-        symbols_to_try = [symbol]
-        
-        # Add .TO suffix for Toronto Stock Exchange if not already present
-        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
-            symbols_to_try.append(f"{symbol}.TO")
-            symbols_to_try.append(f"{symbol}.TSE")
-        
-        # Try NEO Exchange format for some Canadian ETFs
-        if symbol in ['HHIS', 'MSTE']:
-            symbols_to_try.append(f"{symbol}.NE")
+        # Try different ticker formats for international markets
+        symbols_to_try = get_international_ticker_formats(symbol)
         
         for ticker in symbols_to_try:
             try:
@@ -249,17 +244,8 @@ def get_historical_price_with_fallback(symbol, preferred_date):
     try:
         print(f"Getting historical data for {symbol}...")
         
-        # Try different ticker formats for Canadian ETFs
-        symbols_to_try = [symbol]
-        
-        # Add .TO suffix for Toronto Stock Exchange if not already present
-        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
-            symbols_to_try.append(f"{symbol}.TO")
-            symbols_to_try.append(f"{symbol}.TSE")
-        
-        # Try NEO Exchange format for some Canadian ETFs
-        if symbol in ['HHIS', 'MSTE']:
-            symbols_to_try.append(f"{symbol}.NE")
+        # Try different ticker formats for international markets
+        symbols_to_try = get_international_ticker_formats(symbol)
         
         last_error = None
         successful_ticker = None
