@@ -48,7 +48,7 @@ IGLD    $18.86        $22.73         $12,051.96      $602.33             +26.5% 
 
 2. **Clone and run**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/income-investing-portfolio-analyzer.git
+   git clone https://github.com/bissli82/income-investing-portfolio-analyzer.git
    cd income-investing-portfolio-analyzer
    uv run python main.py
    ```
@@ -57,7 +57,7 @@ IGLD    $18.86        $22.73         $12,051.96      $602.33             +26.5% 
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/YOUR_USERNAME/income-investing-portfolio-analyzer.git
+   git clone https://github.com/bissli82/income-investing-portfolio-analyzer.git
    cd income-investing-portfolio-analyzer
    ```
 
