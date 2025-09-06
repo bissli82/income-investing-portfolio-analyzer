@@ -34,7 +34,6 @@ INCOME_ETFS = [
     'BCSF',   # Bain Capital Specialty Finance Inc
     'OCCI',   # OFS Credit Company Inc
     'TRIN',   # Trinity Capital Inc
-    'IML',    # Invesco Multi-Sector Income ETF
     'NML',    # Neuberger Berman MLP and Energy Income Fund
     'SPE',    # Special Opportunities Fund Inc
     'RLTY',   # Cohen & Steers Real Estate Opportunities and Income Fund
@@ -53,7 +52,6 @@ INCOME_ETFS = [
     'PDO',    # PIMCO Dynamic Income Opportunities Fund
     'ETW',    # Eaton Vance Tax-Managed Global Buy-Write Opportunities Fund
     'BTX',    # Brooklyn ImmunoTherapeutics Inc
-    'MARY',   # Procure Space ETF
     'ARDC',   # Ares Dynamic Credit Allocation Fund
     'CII',    # Blackrock Enhanced Capital and Income Fund
     'EVT',    # Eaton Vance Tax Advantaged Dividend Income Fund
@@ -67,7 +65,6 @@ INCOME_ETFS = [
     'RMT',    # Royce Micro-Cap Trust
     'UTF',    # Cohen & Steers Infrastructure Fund
     'FFA',    # First Trust Enhanced Equity Income Fund
-    'DST',    # BlackRock Debt Strategies Fund
     'DHF',    # BNY Mellon High Yield Strategies Fund
     'BDJ',    # Blackrock Enhanced Equity Dividend Trust
     'ASG',    # Liberty All-Star Growth Fund
