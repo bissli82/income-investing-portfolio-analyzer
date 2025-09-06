@@ -12,10 +12,11 @@ def get_international_ticker_formats(symbol):
     symbols_to_try = [symbol]
     
     # Add exchange suffixes if not already present
-    if not any(symbol.endswith(suffix) for suffix in ['.TO', '.TSE', '.AX', '.L', '.NE']):
+    if not any(symbol.endswith(suffix) for suffix in ['.TO', '.TSE', '.AX', '.L', '.NE', '.CN']):
         # Canadian exchanges
         symbols_to_try.append(f"{symbol}.TO")
         symbols_to_try.append(f"{symbol}.TSE")
+        symbols_to_try.append(f"{symbol}.CN")
         
         # Australian exchange
         symbols_to_try.append(f"{symbol}.AX")
