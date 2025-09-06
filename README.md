@@ -48,8 +48,8 @@ IGLD    $18.86        $22.73         $12,051.96      $602.33             +26.5% 
 
 2. **Clone and run**:
    ```bash
-   git clone <your-repo-url>
-   cd "Income Investing"
+   git clone https://github.com/YOUR_USERNAME/income-investing-portfolio-analyzer.git
+   cd income-investing-portfolio-analyzer
    uv run python main.py
    ```
 
@@ -57,8 +57,8 @@ IGLD    $18.86        $22.73         $12,051.96      $602.33             +26.5% 
 
 1. **Clone the repository**:
    ```bash
-   git clone <your-repo-url>
-   cd "Income Investing"
+   git clone https://github.com/YOUR_USERNAME/income-investing-portfolio-analyzer.git
+   cd income-investing-portfolio-analyzer
    ```
 
 2. **Create virtual environment**:
@@ -116,7 +116,7 @@ The tool works with various income-focused ETFs:
 ## 📁 Project Structure
 
 ```
-Income Investing/
+income-investing-portfolio-analyzer/
 ├── main.py              # Entry point - run this!
 ├── symbols.py           # ETF configuration (edit this to add/remove ETFs)
 ├── Analysis.py          # Main analysis logic
@@ -124,6 +124,8 @@ Income Investing/
 ├── verification.py      # Price verification and validation
 ├── html_generator.py    # HTML report generation
 ├── pyproject.toml       # Project dependencies
+├── LICENSE              # MIT license
+├── .gitignore           # Git ignore rules
 └── README.md           # This file
 ```
 
