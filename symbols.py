@@ -5,9 +5,9 @@
 INCOME_ETFS = [
     'CCIF',   # Capital City Income Fund
     'CONY',   # YieldMax COIN Option Income Strategy ETF
-    'HHIS',   # Highland/iBoxx Senior Loan ETF
+    'HHIS',   # Harvest Diversified High Income Shares ETF (Launched Jan 2025)
     'IGLD',   # FT Cboe Vest Gold Strategy Quarterly Buffer ETF
-    'MSTE',   # YieldMax MSTR Option Income Strategy ETF
+    'MSTE',   # Harvest MicroStrategy Enhanced High Income Shares ETF (Launched Mar 5, 2025)
     'MSTY',   # YieldMax TSLA Option Income Strategy ETF
     'NVDY',   # YieldMax NVDA Option Income Strategy ETF
     'OXLC',   # Oxford Lane Capital Corp
@@ -25,8 +25,10 @@ INCOME_ETFS = [
 # Investment amount per ETF (in USD)
 INVESTMENT_PER_ETF = 10000
 
-# Analysis start date (first trading day of 2025)
-START_DATE = "2025-01-02"
+# Analysis start date (preferred start date for all ETFs)
+# Note: ETFs that started later will use their actual launch date with ** notation
+# Format: YYYY-MM-DD (required by yfinance), displayed as DD/MM/YYYY in reports
+START_DATE = "2025-01-02"  # 02/01/2025 - January 2nd, 2025
 
 # Optional: Categories for better organization
 ETF_CATEGORIES = {

@@ -7,16 +7,46 @@ import time
 # Suppress pandas warnings for cleaner output
 warnings.filterwarnings('ignore', category=FutureWarning)
 
+def format_date_dd_mm_yyyy(date_str):
+    """Convert date from YYYY-MM-DD to DD/MM/YYYY format"""
+    try:
+        date_obj = pd.to_datetime(date_str)
+        return date_obj.strftime('%d/%m/%Y')
+    except:
+        return date_str
+
 def get_dividends_for_period(symbol, start_date, end_date, shares_owned):
-    """Get total dividends collected for the period"""
+    """Get total dividends collected for the period, with Canadian ETF support"""
     try:
         print(f"    💰 Getting dividends for period...")
         
-        ticker = yf.Ticker(symbol)
-        dividends = ticker.dividends
+        # Try different ticker formats for Canadian ETFs
+        symbols_to_try = [symbol]
         
-        if dividends.empty:
-            print(f"    ✓ No dividends found")
+        # Add .TO suffix for Toronto Stock Exchange if not already present
+        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
+            symbols_to_try.append(f"{symbol}.TO")
+            symbols_to_try.append(f"{symbol}.TSE")
+        
+        # Try NEO Exchange format for some Canadian ETFs
+        if symbol in ['HHIS', 'MSTE']:
+            symbols_to_try.append(f"{symbol}.NE")
+        
+        for ticker in symbols_to_try:
+            try:
+                yf_ticker = yf.Ticker(ticker)
+                dividends = yf_ticker.dividends
+                
+                if not dividends.empty:
+                    print(f"    ✓ Found dividend data using {ticker}")
+                    break
+                    
+            except Exception as e:
+                print(f"    ❌ Failed getting dividends with {ticker}: {e}")
+                continue
+        else:
+            # No dividends found with any ticker format
+            print(f"    ✓ No dividends found with any ticker format")
             return {
                 'total_dividends': 0.0,
                 'dividend_count': 0,
@@ -65,66 +95,171 @@ def get_dividends_for_period(symbol, start_date, end_date, shares_owned):
         return {'success': False, 'error': str(e), 'total_dividends': 0.0}
 
 def get_current_market_price(symbol):
-    """Get current market price for a symbol"""
+    """Get current market price for a symbol, with Canadian ETF support"""
     try:
         print(f"    📈 Getting current market price...")
         
-        # Method 1: Get most recent trading day data
-        ticker = yf.Ticker(symbol)
-        hist = ticker.history(period="5d", auto_adjust=False)
+        # Try different ticker formats for Canadian ETFs
+        symbols_to_try = [symbol]
         
-        if not hist.empty:
-            # Get the most recent close price
-            current_price = float(hist['Close'].iloc[-1])
-            current_date = hist.index[-1].strftime('%Y-%m-%d')
-            print(f"    ✓ Current price ({current_date}): ${current_price:.2f}")
-            return {'price': current_price, 'date': current_date, 'success': True}
+        # Add .TO suffix for Toronto Stock Exchange if not already present
+        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
+            symbols_to_try.append(f"{symbol}.TO")
+            symbols_to_try.append(f"{symbol}.TSE")
         
-        # Method 2: Try info if history fails
-        info = ticker.info
-        if 'regularMarketPrice' in info and info['regularMarketPrice']:
-            current_price = float(info['regularMarketPrice'])
-            print(f"    ✓ Current price (from info): ${current_price:.2f}")
-            return {'price': current_price, 'success': True}
+        # Try NEO Exchange format for some Canadian ETFs
+        if symbol in ['HHIS', 'MSTE']:
+            symbols_to_try.append(f"{symbol}.NE")
         
-        print(f"    ❌ No current price data available")
-        return {'success': False, 'error': 'No current price data'}
+        for ticker in symbols_to_try:
+            try:
+                # Method 1: Get most recent trading day data
+                yf_ticker = yf.Ticker(ticker)
+                hist = yf_ticker.history(period="5d", auto_adjust=False)
+                
+                if not hist.empty:
+                    # Get the most recent close price
+                    current_price = float(hist['Close'].iloc[-1])
+                    current_date = hist.index[-1].strftime('%Y-%m-%d')
+                    print(f"    ✓ Current price ({current_date}): ${current_price:.2f} (using {ticker})")
+                    return {'price': current_price, 'date': current_date, 'success': True, 'ticker_used': ticker}
+                
+                # Method 2: Try info if history fails
+                info = yf_ticker.info
+                if 'regularMarketPrice' in info and info['regularMarketPrice']:
+                    current_price = float(info['regularMarketPrice'])
+                    print(f"    ✓ Current price (from info): ${current_price:.2f} (using {ticker})")
+                    return {'price': current_price, 'success': True, 'ticker_used': ticker}
+                
+            except Exception as e:
+                print(f"    ❌ Failed with {ticker}: {e}")
+                continue
+        
+        print(f"    ❌ No current price data available with any ticker format")
+        return {'success': False, 'error': 'No current price data available'}
         
     except Exception as e:
         print(f"    ❌ Error getting current price: {e}")
         return {'success': False, 'error': str(e)}
 
-def get_historical_price(symbol, date):
-    """Get historical price for a specific date"""
+def get_historical_price_with_fallback(symbol, preferred_date):
+    """Get historical price for a specific date with fallback to actual launch date"""
     try:
         print(f"Getting historical data for {symbol}...")
         
-        # Download historical data with raw prices (not dividend adjusted)
-        data = yf.download(symbol, start=date, end=pd.Timestamp(date) + pd.Timedelta(days=5), 
-                          auto_adjust=False, progress=False)
+        # Try different ticker formats for Canadian ETFs
+        symbols_to_try = [symbol]
         
-        if data.empty:
-            return None, "No data available"
+        # Add .TO suffix for Toronto Stock Exchange if not already present
+        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
+            symbols_to_try.append(f"{symbol}.TO")
+            symbols_to_try.append(f"{symbol}.TSE")
         
-        # Get the opening price of the first available trading day
-        initial_price = float(data.iloc[0]['Open'])
-        actual_date = data.index[0].strftime('%Y-%m-%d')
+        # Try NEO Exchange format for some Canadian ETFs
+        if symbol in ['HHIS', 'MSTE']:
+            symbols_to_try.append(f"{symbol}.NE")
         
-        print(f"  ✓ Price on {actual_date}: ${initial_price:.2f}")
-        return initial_price, None
+        last_error = None
+        successful_ticker = None
+        
+        for ticker in symbols_to_try:
+            try:
+                print(f"  Trying ticker format: {ticker}")
+                
+                # First try the preferred date
+                data = yf.download(ticker, start=preferred_date, end=pd.Timestamp(preferred_date) + pd.Timedelta(days=5), 
+                                  auto_adjust=False, progress=False)
+                
+                if not data.empty:
+                    # Get the opening price of the first available trading day
+                    initial_price = float(data.iloc[0]['Open'])
+                    actual_date = data.index[0].strftime('%Y-%m-%d')
+                    successful_ticker = ticker
+                    
+                    formatted_date = format_date_dd_mm_yyyy(actual_date)
+                    print(f"  ✓ Price on {formatted_date}: ${initial_price:.2f} (using {ticker})")
+                    return {
+                        'price': initial_price,
+                        'date': actual_date,
+                        'formatted_date': formatted_date,
+                        'ticker': successful_ticker,
+                        'is_fallback': actual_date != preferred_date,
+                        'error': None
+                    }
+                else:
+                    # If preferred date fails, try to find the earliest available date
+                    print(f"  No data for {preferred_date}, searching for earliest available date...")
+                    
+                    # Try a wider range to find when this ETF actually started
+                    search_start = pd.Timestamp(preferred_date) - pd.Timedelta(days=90)  # Go back 3 months
+                    search_end = pd.Timestamp.today()
+                    
+                    data = yf.download(ticker, start=search_start.strftime('%Y-%m-%d'), 
+                                     end=search_end.strftime('%Y-%m-%d'), 
+                                     auto_adjust=False, progress=False)
+                    
+                    if not data.empty:
+                        # Get the first available trading day
+                        initial_price = float(data.iloc[0]['Open'])
+                        actual_date = data.index[0].strftime('%Y-%m-%d')
+                        successful_ticker = ticker
+                        
+                        formatted_date = format_date_dd_mm_yyyy(actual_date)
+                        print(f"  ✓ Found earliest date {formatted_date}: ${initial_price:.2f} (using {ticker}) **")
+                        return {
+                            'price': initial_price,
+                            'date': actual_date,
+                            'formatted_date': formatted_date,
+                            'ticker': successful_ticker,
+                            'is_fallback': True,
+                            'error': None
+                        }
+                
+            except Exception as e:
+                last_error = str(e)
+                print(f"  ❌ Failed with {ticker}: {e}")
+                continue
+        
+        # If all formats failed, return the error
+        return {
+            'price': None,
+            'date': None,
+            'ticker': None,
+            'is_fallback': False,
+            'error': f"No data available with any ticker format. Last error: {last_error}"
+        }
         
     except Exception as e:
         print(f"  ❌ Error getting historical data: {e}")
-        return None, str(e)
+        return {
+            'price': None,
+            'date': None,
+            'ticker': None,
+            'is_fallback': False,
+            'error': str(e)
+        }
+
+def get_historical_price(symbol, date):
+    """Legacy function for compatibility"""
+    result = get_historical_price_with_fallback(symbol, date)
+    if result['error']:
+        return None, result['error']
+    return result['price'], None
 
 def process_etf_data(symbol, start_date, end_date, investment_amount):
-    """Process all data for a single ETF"""
+    """Process all data for a single ETF with dynamic start date support"""
     print(f"Processing {symbol}...")
     
-    # Get initial price
-    initial_price, error = get_historical_price(symbol, start_date)
-    if initial_price is None:
-        return None, error
+    # Get initial price with fallback to actual launch date
+    price_result = get_historical_price_with_fallback(symbol, start_date)
+    if price_result['error']:
+        return None, price_result['error']
+    
+    initial_price = price_result['price']
+    actual_start_date = price_result['date']
+    formatted_start_date = price_result['formatted_date']
+    is_fallback = price_result['is_fallback']
+    ticker_used = price_result['ticker']
     
     # Calculate shares purchased
     shares_purchased = investment_amount / initial_price
@@ -147,8 +282,8 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
         gain_loss_pct = 0.0
         print(f"  ❌ Could not get current price")
     
-    # Get dividend data for the period
-    dividend_data = get_dividends_for_period(symbol, start_date, end_date, shares_purchased)
+    # Get dividend data for the period (use actual start date)
+    dividend_data = get_dividends_for_period(symbol, actual_start_date, end_date, shares_purchased)
     time.sleep(0.2)  # Be nice to the API
     
     dividends_collected = dividend_data.get('total_dividends', 0.0)
@@ -157,8 +292,11 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
     total_return = gain_loss + dividends_collected
     total_return_pct = (total_return / investment_amount) * 100 if current_data.get('success') else 0.0
     
+    # Create symbol display with ** if it's a fallback date
+    symbol_display = f"{symbol}**" if is_fallback else symbol
+    
     return {
-        'Symbol': symbol,
+        'Symbol': symbol_display,
         'Initial Share Price USD': round(initial_price, 2),
         'Shares Purchased': round(shares_purchased, 2),
         'Current Share Price USD': round(current_price, 2),
@@ -168,5 +306,9 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
         'Gain/Loss %': round(gain_loss_pct, 1),
         'Total Return USD': round(total_return, 2),
         'Total Return %': round(total_return_pct, 1),
-        'Verified': '✅ VERIFIED'
+        'Verified': '✅ VERIFIED',
+        'Actual Start Date': actual_start_date,
+        'Formatted Start Date': formatted_start_date,
+        'Is Fallback': is_fallback,
+        'Original Symbol': symbol
     }, None

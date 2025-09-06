@@ -8,56 +8,73 @@ warnings.filterwarnings('ignore', category=FutureWarning)
 
 def verify_price_with_alternative_source(symbol, target_date):
     """
-    Verify price using multiple yfinance methods for cross-validation
+    Verify price using multiple yfinance methods for cross-validation, with Canadian ETF support
     Returns dict with verification status and average price
     """
     try:
         print(f"    🔍 Trying alternative verification methods...")
         
+        # Try different ticker formats for Canadian ETFs
+        symbols_to_try = [symbol]
+        
+        # Add .TO suffix for Toronto Stock Exchange if not already present
+        if not symbol.endswith('.TO') and not symbol.endswith('.TSE'):
+            symbols_to_try.append(f"{symbol}.TO")
+            symbols_to_try.append(f"{symbol}.TSE")
+        
+        # Try NEO Exchange format for some Canadian ETFs
+        if symbol in ['HHIS', 'MSTE']:
+            symbols_to_try.append(f"{symbol}.NE")
+        
         prices = []
         methods = []
         
-        # Method 1: Ticker.history with different periods
-        try:
-            ticker = yf.Ticker(symbol)
-            hist1 = ticker.history(start=target_date, end=pd.Timestamp(target_date) + pd.Timedelta(days=5), 
-                                 auto_adjust=False)
-            if not hist1.empty:
-                price1 = float(hist1.iloc[0]['Open'])
-                prices.append(price1)
-                methods.append("Method 1 (Ticker.history)")
-                print(f"    ✓ Method 1 (Ticker.history): ${price1:.2f}")
-        except Exception as e:
-            print(f"    ❌ Method 1 failed: {e}")
-        
-        # Method 2: Different period approach (skip for now to avoid duplication)
-        
-        # Method 3: yf.download with different date range
-        try:
-            start_range = pd.Timestamp(target_date) - pd.Timedelta(days=2)
-            end_range = pd.Timestamp(target_date) + pd.Timedelta(days=4)
+        for ticker_format in symbols_to_try:
+            print(f"    📊 Trying verification with {ticker_format}...")
             
-            data3 = yf.download(symbol, start=start_range.strftime('%Y-%m-%d'), 
-                              end=end_range.strftime('%Y-%m-%d'), auto_adjust=False, progress=False)
-            if not data3.empty:
-                # Find the closest date to our target
-                target_ts = pd.Timestamp(target_date)
-                closest_idx = None
-                min_diff = pd.Timedelta.max
+            # Method 1: Ticker.history with different periods
+            try:
+                ticker = yf.Ticker(ticker_format)
+                hist1 = ticker.history(start=target_date, end=pd.Timestamp(target_date) + pd.Timedelta(days=5), 
+                                     auto_adjust=False)
+                if not hist1.empty:
+                    price1 = float(hist1.iloc[0]['Open'])
+                    prices.append(price1)
+                    methods.append(f"Method 1 ({ticker_format})")
+                    print(f"    ✓ Method 1 ({ticker_format}): ${price1:.2f}")
+            except Exception as e:
+                print(f"    ❌ Method 1 failed with {ticker_format}: {e}")
+            
+            # Method 2: yf.download with different date range
+            try:
+                start_range = pd.Timestamp(target_date) - pd.Timedelta(days=2)
+                end_range = pd.Timestamp(target_date) + pd.Timedelta(days=4)
                 
-                for idx in data3.index:
-                    diff = abs(idx - target_ts)
-                    if diff < min_diff:
-                        min_diff = diff
-                        closest_idx = idx
-                
-                if closest_idx is not None:
-                    price3 = float(data3.loc[closest_idx]['Open'])
-                    prices.append(price3)
-                    methods.append("Method 3 (download range)")
-                    print(f"    ✓ Method 3 (download range): ${price3:.2f}")
-        except Exception as e:
-            print(f"    ❌ Method 3 failed: {e}")
+                data3 = yf.download(ticker_format, start=start_range.strftime('%Y-%m-%d'), 
+                                  end=end_range.strftime('%Y-%m-%d'), auto_adjust=False, progress=False)
+                if not data3.empty:
+                    # Find the closest date to our target
+                    target_ts = pd.Timestamp(target_date)
+                    closest_idx = None
+                    min_diff = pd.Timedelta.max
+                    
+                    for idx in data3.index:
+                        diff = abs(idx - target_ts)
+                        if diff < min_diff:
+                            min_diff = diff
+                            closest_idx = idx
+                    
+                    if closest_idx is not None:
+                        price3 = float(data3.loc[closest_idx]['Open'])
+                        prices.append(price3)
+                        methods.append(f"Method 2 ({ticker_format})")
+                        print(f"    ✓ Method 2 ({ticker_format}): ${price3:.2f}")
+            except Exception as e:
+                print(f"    ❌ Method 2 failed with {ticker_format}: {e}")
+            
+            # If we found data with this ticker format, we can break
+            if prices:
+                break
         
         # Analyze results
         if len(prices) == 0:

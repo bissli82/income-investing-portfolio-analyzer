@@ -2,6 +2,15 @@
 import pandas as pd
 from datetime import datetime
 
+def format_date_dd_mm_yyyy(date_str):
+    """Convert date from YYYY-MM-DD to DD/MM/YYYY format"""
+    try:
+        import pandas as pd
+        date_obj = pd.to_datetime(date_str)
+        return date_obj.strftime('%d/%m/%Y')
+    except:
+        return date_str
+
 def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start_date):
     """Generate HTML report with portfolio analysis"""
     
@@ -13,6 +22,18 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
     total_gain_loss_pct = (total_gain_loss / total_initial_investment * 100) if total_initial_investment > 0 else 0
     total_return_with_dividends = total_current_value + total_dividends_collected - total_initial_investment
     total_return_pct_with_dividends = (total_return_with_dividends / total_initial_investment * 100) if total_initial_investment > 0 else 0
+    
+    # Format dates
+    formatted_start_date = format_date_dd_mm_yyyy(start_date)
+    
+    # Collect ETFs that started later (with **) for footnotes
+    fallback_etfs = []
+    if 'Is Fallback' in working_etfs_df.columns:
+        for _, row in working_etfs_df.iterrows():
+            if row.get('Is Fallback', False):
+                original_symbol = row.get('Original Symbol', row['Symbol'].replace('**', ''))
+                formatted_date = row.get('Formatted Start Date', 'Unknown')
+                fallback_etfs.append(f"**{original_symbol}: Started trading on {formatted_date}")
     
     html_content = f"""<!DOCTYPE html>
 <html>
@@ -104,6 +125,9 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
             color: #e74c3c;
             font-weight: bold;
         }}
+        .fallback-etf {{
+            background-color: #ffebee !important;
+        }}
         .summary {{
             background-color: #f8f9fa;
             padding: 20px;
@@ -154,8 +178,8 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
         <h1>📊 Income Investing Portfolio Analysis</h1>
         
         <div class="info">
-            <strong>Analysis Date:</strong> {datetime.now().strftime("%B %d, %Y")} | 
-            <strong>Reference Date:</strong> {start_date} | 
+            <strong>Analysis Date:</strong> {datetime.now().strftime("%d/%m/%Y")} | 
+            <strong>Reference Date:</strong> {formatted_start_date} | 
             <strong>Investment per ETF:</strong> ${investment_amount:,.2f}
         </div>
 
@@ -212,6 +236,10 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
     # Add working ETF rows
     for _, row in working_etfs_df.iterrows():
         row_class = ""
+        
+        # Check if this is a fallback ETF (started later) and add red background
+        if '**' in str(row['Symbol']):
+            row_class = 'fallback-etf'
         
         # Determine gain/loss color
         gain_loss_class = ""
@@ -274,6 +302,25 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
         html_content += """
                 </tbody>
             </table>
+        </div>
+        """
+    
+    # Add footnotes if there are any fallback ETFs
+    if fallback_etfs:
+        html_content += """
+        <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #17a2b8;">
+            <h3 style="color: #2c3e50; margin-top: 0;">📝 Notes</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+        """
+        
+        for note in fallback_etfs:
+            html_content += f"<li>{note}</li>"
+        
+        html_content += """
+            </ul>
+            <p style="margin-bottom: 0; font-style: italic; color: #6c757d;">
+                ETFs marked with ** started trading after the preferred reference date and use their actual launch date.
+            </p>
         </div>
         """
     

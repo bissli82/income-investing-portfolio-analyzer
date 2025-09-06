@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Income Investing Analysis</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 1400px;
+            margin: 0 auto;
+            overflow-x: auto;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .info {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+            text-align: center;
+            color: #34495e;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 13px;
+            min-width: 1200px;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 8px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+            user-select: none;
+            position: relative;
+        }
+        th:hover {
+            background-color: #2980b9;
+        }
+        th.sort-asc::after {
+            content: ' ↑';
+            position: absolute;
+            right: 5px;
+            opacity: 1;
+        }
+        th.sort-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+        td {
+            padding: 8px 6px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+        .symbol {
+            text-align: center;
+        }
+        .currency {
+            text-align: center;
+        }
+        .shares {
+            text-align: center;
+        }
+        .verification {
+            text-align: center;
+        }
+        .gain {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        .loss {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .fallback-etf {
+            background-color: #ffebee !important;
+        }
+        .summary {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border-left: 4px solid #3498db;
+        }
+        .summary h3 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .summary-item {
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .summary-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .summary-label {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+        .positive { color: #27ae60; }
+        .negative { color: #e74c3c; }
+        .failed-table {
+            margin-top: 40px;
+        }
+        .failed-table h2 {
+            color: #e74c3c;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/sortable-tablesort@2.0.1/sortable.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Income Investing Portfolio Analysis</h1>
+        
+        <div class="info">
+            <strong>Analysis Date:</strong> 06/09/2025 | 
+            <strong>Reference Date:</strong> 02/01/2025 | 
+            <strong>Investment per ETF:</strong> $10,000.00
+        </div>
+
+        <div class="summary">
+            <h3>💰 Portfolio Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-value">$170,000.00</div>
+                    <div class="summary-label">Initial Investment</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">$145,377.08</div>
+                    <div class="summary-label">Current Value</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">$35,073.81</div>
+                    <div class="summary-label">Dividends Collected</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value negative">$-24,622.92</div>
+                    <div class="summary-label">Price Gain/Loss (-14.5%)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value positive">$10,450.89</div>
+                    <div class="summary-label">Total Return (+6.1%)</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-value">17/17</div>
+                    <div class="summary-label">Working ETFs</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 style="color: #2c3e50; margin-top: 30px;">📈 Active Portfolio</h2>
+        <table id="resultsTable" class="sortable">
+            <thead>
+                <tr>
+                    <th data-sort="string">Symbol</th>
+                    <th data-sort="float">Initial Price (USD)</th>
+                    <th data-sort="float">Shares Purchased</th>
+                    <th data-sort="float">Current Price (USD)</th>
+                    <th data-sort="float">Current Value (USD)</th>
+                    <th data-sort="float">Dividends Collected (USD)</th>
+                    <th data-sort="float">Gain/Loss (USD)</th>
+                    <th data-sort="float">Gain/Loss (%)</th>
+                    <th data-sort="float">Total Return (USD)</th>
+                    <th data-sort="float">Total Return (%)</th>
+                    <th data-sort="string">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+    
+                <tr class="">
+                    <td class="symbol">CCIF</td>
+                    <td class="currency" data-sort="7.99">$7.99</td>
+                    <td class="shares" data-sort="1251.56">1251.56</td>
+                    <td class="currency" data-sort="5.65">$5.65</td>
+                    <td class="currency" data-sort="7071.34">$7,071.34</td>
+                    <td class="currency" data-sort="1051.31">$1,051.31</td>
+                    <td class="currency loss" data-sort="-2928.66">$-2,928.66</td>
+                    <td class="currency loss" data-sort="-29.3">-29.3%</td>
+                    <td class="currency loss" data-sort="-1877.35">$-1,877.35</td>
+                    <td class="currency loss" data-sort="-18.8">-18.8%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">CONY</td>
+                    <td class="currency" data-sort="13.38">$13.38</td>
+                    <td class="shares" data-sort="747.38">747.38</td>
+                    <td class="currency" data-sort="6.81">$6.81</td>
+                    <td class="currency" data-sort="5089.69">$5,089.69</td>
+                    <td class="currency" data-sort="4467.86">$4,467.86</td>
+                    <td class="currency loss" data-sort="-4910.31">$-4,910.31</td>
+                    <td class="currency loss" data-sort="-49.1">-49.1%</td>
+                    <td class="currency loss" data-sort="-442.45">$-442.45</td>
+                    <td class="currency loss" data-sort="-4.4">-4.4%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="fallback-etf">
+                    <td class="symbol">HHIS**</td>
+                    <td class="currency" data-sort="12.35">$12.35</td>
+                    <td class="shares" data-sort="809.72">809.72</td>
+                    <td class="currency" data-sort="12.64">$12.64</td>
+                    <td class="currency" data-sort="10234.82">$10,234.82</td>
+                    <td class="currency" data-sort="1417.0">$1,417.00</td>
+                    <td class="currency gain" data-sort="234.82">$234.82</td>
+                    <td class="currency gain" data-sort="2.3">+2.3%</td>
+                    <td class="currency gain" data-sort="1651.82">$1,651.82</td>
+                    <td class="currency gain" data-sort="16.5">+16.5%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">IGLD</td>
+                    <td class="currency" data-sort="18.86">$18.86</td>
+                    <td class="shares" data-sort="530.22">530.22</td>
+                    <td class="currency" data-sort="22.73">$22.73</td>
+                    <td class="currency" data-sort="12051.96">$12,051.96</td>
+                    <td class="currency" data-sort="602.33">$602.33</td>
+                    <td class="currency gain" data-sort="2051.96">$2,051.96</td>
+                    <td class="currency gain" data-sort="20.5">+20.5%</td>
+                    <td class="currency gain" data-sort="2654.29">$2,654.29</td>
+                    <td class="currency gain" data-sort="26.5">+26.5%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="fallback-etf">
+                    <td class="symbol">MSTE**</td>
+                    <td class="currency" data-sort="13.5">$13.50</td>
+                    <td class="shares" data-sort="740.74">740.74</td>
+                    <td class="currency" data-sort="13.02">$13.02</td>
+                    <td class="currency" data-sort="9644.44">$9,644.44</td>
+                    <td class="currency" data-sort="2718.52">$2,718.52</td>
+                    <td class="currency loss" data-sort="-355.56">$-355.56</td>
+                    <td class="currency loss" data-sort="-3.6">-3.6%</td>
+                    <td class="currency gain" data-sort="2362.96">$2,362.96</td>
+                    <td class="currency gain" data-sort="23.6">+23.6%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">MSTY</td>
+                    <td class="currency" data-sort="27.14">$27.14</td>
+                    <td class="shares" data-sort="368.46">368.46</td>
+                    <td class="currency" data-sort="15.62">$15.62</td>
+                    <td class="currency" data-sort="5755.34">$5,755.34</td>
+                    <td class="currency" data-sort="5295.14">$5,295.14</td>
+                    <td class="currency loss" data-sort="-4244.66">$-4,244.66</td>
+                    <td class="currency loss" data-sort="-42.4">-42.4%</td>
+                    <td class="currency gain" data-sort="1050.48">$1,050.48</td>
+                    <td class="currency gain" data-sort="10.5">+10.5%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">NVDY</td>
+                    <td class="currency" data-sort="23.59">$23.59</td>
+                    <td class="shares" data-sort="423.91">423.91</td>
+                    <td class="currency" data-sort="16.11">$16.11</td>
+                    <td class="currency" data-sort="6829.17">$6,829.17</td>
+                    <td class="currency" data-sort="3801.61">$3,801.61</td>
+                    <td class="currency loss" data-sort="-3170.83">$-3,170.83</td>
+                    <td class="currency loss" data-sort="-31.7">-31.7%</td>
+                    <td class="currency gain" data-sort="630.78">$630.78</td>
+                    <td class="currency gain" data-sort="6.3">+6.3%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">OXLC</td>
+                    <td class="currency" data-sort="5.09">$5.09</td>
+                    <td class="shares" data-sort="1964.64">1964.64</td>
+                    <td class="currency" data-sort="3.64">$3.64</td>
+                    <td class="currency" data-sort="7151.28">$7,151.28</td>
+                    <td class="currency" data-sort="1414.54">$1,414.54</td>
+                    <td class="currency loss" data-sort="-2848.72">$-2,848.72</td>
+                    <td class="currency loss" data-sort="-28.5">-28.5%</td>
+                    <td class="currency loss" data-sort="-1434.18">$-1,434.18</td>
+                    <td class="currency loss" data-sort="-14.3">-14.3%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">QDTE</td>
+                    <td class="currency" data-sort="40.04">$40.04</td>
+                    <td class="shares" data-sort="249.75">249.75</td>
+                    <td class="currency" data-sort="34.79">$34.79</td>
+                    <td class="currency" data-sort="8690.06">$8,690.06</td>
+                    <td class="currency" data-sort="2071.93">$2,071.93</td>
+                    <td class="currency loss" data-sort="-1309.94">$-1,309.94</td>
+                    <td class="currency loss" data-sort="-13.1">-13.1%</td>
+                    <td class="currency gain" data-sort="761.99">$761.99</td>
+                    <td class="currency gain" data-sort="7.6">+7.6%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">QQQI</td>
+                    <td class="currency" data-sort="52.6">$52.60</td>
+                    <td class="shares" data-sort="190.11">190.11</td>
+                    <td class="currency" data-sort="53.18">$53.18</td>
+                    <td class="currency" data-sort="10110.27">$10,110.27</td>
+                    <td class="currency" data-sort="929.09">$929.09</td>
+                    <td class="currency gain" data-sort="110.27">$110.27</td>
+                    <td class="currency gain" data-sort="1.1">+1.1%</td>
+                    <td class="currency gain" data-sort="1039.35">$1,039.35</td>
+                    <td class="currency gain" data-sort="10.4">+10.4%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">QYLD</td>
+                    <td class="currency" data-sort="18.28">$18.28</td>
+                    <td class="shares" data-sort="547.05">547.05</td>
+                    <td class="currency" data-sort="16.79">$16.79</td>
+                    <td class="currency" data-sort="9184.9">$9,184.90</td>
+                    <td class="currency" data-sort="736.87">$736.87</td>
+                    <td class="currency loss" data-sort="-815.1">$-815.10</td>
+                    <td class="currency loss" data-sort="-8.2">-8.2%</td>
+                    <td class="currency loss" data-sort="-78.23">$-78.23</td>
+                    <td class="currency loss" data-sort="-0.8">-0.8%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">SPYI</td>
+                    <td class="currency" data-sort="51.09">$51.09</td>
+                    <td class="shares" data-sort="195.73">195.73</td>
+                    <td class="currency" data-sort="51.63">$51.63</td>
+                    <td class="currency" data-sort="10105.7">$10,105.70</td>
+                    <td class="currency" data-sort="790.57">$790.57</td>
+                    <td class="currency gain" data-sort="105.7">$105.70</td>
+                    <td class="currency gain" data-sort="1.1">+1.1%</td>
+                    <td class="currency gain" data-sort="896.26">$896.26</td>
+                    <td class="currency gain" data-sort="9.0">+9.0%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">USCL</td>
+                    <td class="currency" data-sort="70.85">$70.85</td>
+                    <td class="shares" data-sort="141.14">141.14</td>
+                    <td class="currency" data-sort="76.0">$76.00</td>
+                    <td class="currency" data-sort="10727.45">$10,727.45</td>
+                    <td class="currency" data-sort="54.9">$54.90</td>
+                    <td class="currency gain" data-sort="727.45">$727.45</td>
+                    <td class="currency gain" data-sort="7.3">+7.3%</td>
+                    <td class="currency gain" data-sort="782.36">$782.36</td>
+                    <td class="currency gain" data-sort="7.8">+7.8%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">XFLT</td>
+                    <td class="currency" data-sort="6.65">$6.65</td>
+                    <td class="shares" data-sort="1503.76">1503.76</td>
+                    <td class="currency" data-sort="5.59">$5.59</td>
+                    <td class="currency" data-sort="8406.02">$8,406.02</td>
+                    <td class="currency" data-sort="894.74">$894.74</td>
+                    <td class="currency loss" data-sort="-1593.98">$-1,593.98</td>
+                    <td class="currency loss" data-sort="-15.9">-15.9%</td>
+                    <td class="currency loss" data-sort="-699.25">$-699.25</td>
+                    <td class="currency loss" data-sort="-7.0">-7.0%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">YBTC</td>
+                    <td class="currency" data-sort="50.0">$50.00</td>
+                    <td class="shares" data-sort="200.0">200.00</td>
+                    <td class="currency" data-sort="45.22">$45.22</td>
+                    <td class="currency" data-sort="9044.0">$9,044.00</td>
+                    <td class="currency" data-sort="2927.8">$2,927.80</td>
+                    <td class="currency loss" data-sort="-956.0">$-956.00</td>
+                    <td class="currency loss" data-sort="-9.6">-9.6%</td>
+                    <td class="currency gain" data-sort="1971.8">$1,971.80</td>
+                    <td class="currency gain" data-sort="19.7">+19.7%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">YMAG</td>
+                    <td class="currency" data-sort="19.33">$19.33</td>
+                    <td class="shares" data-sort="517.33">517.33</td>
+                    <td class="currency" data-sort="15.39">$15.39</td>
+                    <td class="currency" data-sort="7961.72">$7,961.72</td>
+                    <td class="currency" data-sort="2623.9">$2,623.90</td>
+                    <td class="currency loss" data-sort="-2038.28">$-2,038.28</td>
+                    <td class="currency loss" data-sort="-20.4">-20.4%</td>
+                    <td class="currency gain" data-sort="585.62">$585.62</td>
+                    <td class="currency gain" data-sort="5.9">+5.9%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+                <tr class="">
+                    <td class="symbol">YMAX</td>
+                    <td class="currency" data-sort="17.12">$17.12</td>
+                    <td class="shares" data-sort="584.11">584.11</td>
+                    <td class="currency" data-sort="12.53">$12.53</td>
+                    <td class="currency" data-sort="7318.92">$7,318.92</td>
+                    <td class="currency" data-sort="3275.7">$3,275.70</td>
+                    <td class="currency loss" data-sort="-2681.08">$-2,681.08</td>
+                    <td class="currency loss" data-sort="-26.8">-26.8%</td>
+                    <td class="currency gain" data-sort="594.63">$594.63</td>
+                    <td class="currency gain" data-sort="5.9">+5.9%</td>
+                    <td class="verification">✅ VERIFIED</td>
+                </tr>
+        
+            </tbody>
+        </table>
+    
+        <div style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #17a2b8;">
+            <h3 style="color: #2c3e50; margin-top: 0;">📝 Notes</h3>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+        <li>**HHIS: Started trading on 16/01/2025</li><li>**MSTE: Started trading on 05/03/2025</li>
+            </ul>
+            <p style="margin-bottom: 0; font-style: italic; color: #6c757d;">
+                ETFs marked with ** started trading after the preferred reference date and use their actual launch date.
+            </p>
+        </div>
+        
+    </div>
+    
+    <script>
+        // Initialize sortable tables
+        document.addEventListener('DOMContentLoaded', function() {
+            const table = document.getElementById('resultsTable');
+            if (table) {
+                new Sortable(table, {
+                    headers: {
+                        0: { sorter: 'text' },
+                        1: { sorter: 'digit' },
+                        2: { sorter: 'digit' },
+                        3: { sorter: 'digit' },
+                        4: { sorter: 'digit' },
+                        5: { sorter: 'digit' },
+                        6: { sorter: 'digit' },
+                        7: { sorter: 'digit' },
+                        8: { sorter: 'digit' },
+                        9: { sorter: 'digit' },
+                        10: { sorter: 'text' }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+    

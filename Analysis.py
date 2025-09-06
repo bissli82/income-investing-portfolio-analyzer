@@ -1,4 +1,4 @@
-# Income Investing Analysis - Main Script
+# Income Investing Analysis - Main Script (Fixed Version)
 import pandas as pd
 import warnings
 import time
@@ -14,16 +14,20 @@ from html_generator import create_html_report, save_html_report
 warnings.filterwarnings('ignore', category=FutureWarning)
 
 def main():
-    """Run the complete income investing portfolio analysis"""
+    """Main analysis function"""
+    # Format the start date for display
+    from data_fetcher import format_date_dd_mm_yyyy
+    formatted_start_date = format_date_dd_mm_yyyy(START_DATE)
+    
     print("="*60)
     print("INCOME INVESTING - INITIAL PURCHASE ANALYSIS")
     print("="*60)
-    print(f"Reference Date: {START_DATE} (Raw Market Prices - Not Dividend Adjusted)")
+    print(f"Reference Date: {formatted_start_date} (Raw Market Prices - Not Dividend Adjusted)")
     print(f"Investment Amount: ${INVESTMENT_PER_ETF:,} per ETF")
     print("="*60)
     
     # Initialize data structures
-results = []
+    results = []
     verification_results = []
     end_date = pd.Timestamp.today().strftime("%Y-%m-%d")
     
@@ -101,9 +105,9 @@ results = []
         
         except Exception as e:
             print(f"  ❌ Unexpected error processing {etf}: {e}")
-            # Add failed entry
-    results.append({
-        'Symbol': etf,
+            # Add failed entry - PROPERLY INDENTED INSIDE THE EXCEPT BLOCK
+            results.append({
+                'Symbol': etf,
                 'Initial Share Price USD': 0.00,
                 'Shares Purchased': 0.00,
                 'Current Share Price USD': 0.00,
@@ -128,7 +132,7 @@ results = []
     
     # Generate HTML report
     html_content = create_html_report(working_etfs, failed_etfs, INVESTMENT_PER_ETF, START_DATE)
-    save_html_report(html_content)
+    save_html_report(html_content, "income_investing_report_fixed.html")
     
     print("\n" + "="*60)
     print(f"Total ETFs Analyzed: {len(INCOME_ETFS)}")
@@ -210,6 +214,15 @@ def print_results(working_etfs, failed_etfs, verification_results):
             print(f"\nBest Price Performer: {best_performer['Symbol']} ({best_performer['Gain/Loss %']:+.1f}%)")
             print(f"Worst Price Performer: {worst_performer['Symbol']} ({worst_performer['Gain/Loss %']:+.1f}%)")
             print(f"Highest Dividend Payer: {highest_dividend['Symbol']} (${highest_dividend['Dividends Collected USD']:.2f})")
+            
+            # Show footnotes for ETFs that started later
+            fallback_etfs = working_etfs[working_etfs.get('Is Fallback', False) == True]
+            if not fallback_etfs.empty:
+                print(f"\nETFs with Different Start Dates:")
+                for _, row in fallback_etfs.iterrows():
+                    original_symbol = row.get('Original Symbol', row['Symbol'].replace('**', ''))
+                    formatted_date = row.get('Formatted Start Date', 'Unknown')
+                    print(f"  **{original_symbol}: Started trading on {formatted_date}")
 
 # Run the analysis when script is executed directly
 if __name__ == "__main__":
