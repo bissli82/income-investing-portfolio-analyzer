@@ -156,7 +156,8 @@ def get_etf_additional_info(symbol):
                         else:
                             formatted_size = f"${etf_size:.0f}"
                     
-                    print(f"    ✓ NAV: ${nav:.2f if nav else 'N/A'}, Size: {formatted_size} (using {ticker})")
+                    nav_display = f"${nav:.2f}" if nav else "N/A"
+                    print(f"    ✓ NAV: {nav_display}, Size: {formatted_size} (using {ticker})")
                     return {
                         'nav': nav,
                         'etf_size': etf_size,
