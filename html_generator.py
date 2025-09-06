@@ -228,7 +228,7 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
                     <th data-sort="float">Initial Price (USD)</th>
                     <th data-sort="float">Current Price (USD)</th>
                     <th data-sort="float">NAV (USD)</th>
-                    <th data-sort="string">ETF Size</th>
+                    <th data-sort="float">ETF Size</th>
                     <th data-sort="float">Shares Purchased</th>
                     <th data-sort="float">Current Value (USD)</th>
                     <th data-sort="float">Dividends Collected (USD)</th>
@@ -274,7 +274,7 @@ def create_html_report(working_etfs_df, failed_etfs_df, investment_amount, start
                     <td class="currency" data-sort="{row['Initial Share Price USD']}">${row['Initial Share Price USD']:.2f}</td>
                     <td class="currency" data-sort="{row['Current Share Price USD']}">${row['Current Share Price USD']:.2f}</td>
                     <td class="nav" data-sort="{nav_sort_value}">{nav_display}</td>
-                    <td class="etf-size" data-sort="{row['ETF Size']}">{row['ETF Size']}</td>
+                    <td class="etf-size" data-sort="{row['ETF Size Millions']}">{row['ETF Size']}</td>
                     <td class="shares" data-sort="{row['Shares Purchased']}">{row['Shares Purchased']:.2f}</td>
                     <td class="currency" data-sort="{row['Current Portfolio Value USD']}">${row['Current Portfolio Value USD']:,.2f}</td>
                     <td class="currency" data-sort="{row['Dividends Collected USD']}">${row['Dividends Collected USD']:,.2f}</td>

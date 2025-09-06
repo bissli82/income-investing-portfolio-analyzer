@@ -144,23 +144,27 @@ def get_etf_additional_info(symbol):
                     if not etf_size and 'marketCap' in info and info['marketCap']:
                         etf_size = info['marketCap']
                     
-                    # Format the size for display
+                    # Format the size for display (everything in millions for consistency)
                     formatted_size = "N/A"
                     if etf_size:
-                        if etf_size >= 1e9:
-                            formatted_size = f"${etf_size/1e9:.1f}B"
-                        elif etf_size >= 1e6:
-                            formatted_size = f"${etf_size/1e6:.1f}M"
-                        elif etf_size >= 1e3:
-                            formatted_size = f"${etf_size/1e3:.1f}K"
+                        size_in_millions = etf_size / 1e6
+                        if size_in_millions >= 1000:
+                            # For very large funds, show as billions but with consistent decimal places
+                            formatted_size = f"${size_in_millions/1000:.1f}B"
+                        elif size_in_millions >= 1:
+                            formatted_size = f"${size_in_millions:.1f}M"
+                        elif size_in_millions >= 0.1:
+                            formatted_size = f"${size_in_millions:.2f}M"
                         else:
-                            formatted_size = f"${etf_size:.0f}"
+                            # For very small funds, show in thousands
+                            formatted_size = f"${etf_size/1e3:.1f}K"
                     
                     nav_display = f"${nav:.2f}" if nav else "N/A"
                     print(f"    ✓ NAV: {nav_display}, Size: {formatted_size} (using {ticker})")
                     return {
                         'nav': nav,
                         'etf_size': etf_size,
+                        'etf_size_millions': etf_size / 1e6 if etf_size else 0,
                         'formatted_size': formatted_size,
                         'success': True,
                         'ticker_used': ticker
@@ -175,6 +179,7 @@ def get_etf_additional_info(symbol):
         return {
             'nav': None,
             'etf_size': None,
+            'etf_size_millions': 0,
             'formatted_size': "N/A",
             'success': False,
             'error': f'Could not retrieve additional info for {symbol}'
@@ -185,6 +190,7 @@ def get_etf_additional_info(symbol):
         return {
             'nav': None,
             'etf_size': None,
+            'etf_size_millions': 0,
             'formatted_size': "N/A",
             'success': False,
             'error': str(e)
@@ -384,6 +390,7 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
     
     nav = additional_info.get('nav', None)
     etf_size = additional_info.get('formatted_size', 'N/A')
+    etf_size_millions = additional_info.get('etf_size_millions', 0)
     
     # Get dividend data for the period (use actual start date)
     dividend_data = get_dividends_for_period(symbol, actual_start_date, end_date, shares_purchased)
@@ -404,6 +411,7 @@ def process_etf_data(symbol, start_date, end_date, investment_amount):
         'Current Share Price USD': round(current_price, 2),
         'NAV USD': round(nav, 2) if nav else 'N/A',
         'ETF Size': etf_size,
+        'ETF Size Millions': etf_size_millions,
         'Shares Purchased': round(shares_purchased, 2),
         'Current Portfolio Value USD': round(current_value, 2),
         'Dividends Collected USD': round(dividends_collected, 2),
